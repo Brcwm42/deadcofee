@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>微光所 GLIMMER ROOM｜台中西區深夜老宅咖啡廳</title>
+  <meta
+    name="description"
+    content="藏身台中西區模範街巷弄的兩層樓老宅咖啡廳，一樓微光交流區、二樓靜謐專注區，提供精品手沖咖啡、手作甜點與器皿美學體驗。"
+  />
+
+  <!-- 載入 Google Fonts 思源黑體與思源宋體，提升中文排版質感 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- 載入 Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans TC"', 'sans-serif'],
+            serif: ['"Noto Serif TC"', 'serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- 載入 React 18 與 Babel（支援瀏覽器直接編譯執行 JSX 元件） -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-[#14110F] text-[#F5EFEA] font-sans antialiased overflow-x-hidden selection:bg-[#D4A373] selection:text-[#14110F]">
+  <!-- React 應用程式掛載點 -->
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    /**
+     * ============================================================================
+     * 集中式資料管理區 (Centralized Data Store)
+     * 方便維護品牌資訊、菜單品項與圖庫素材，達成資料與畫面分離
+     * ============================================================================
+     */
+
+    // 1. 營業與聯絡資訊（全站統一來源，確保資訊一致性）
+    const STORE_INFO = {
+      name: '微光所',
+      englishName: 'GLIMMER ROOM',
+      tagline: '在深夜老宅的暖光裡，以講究器皿與純粹美味安放每一段時光',
+      address: '台中市西區模範街 18 巷 12 號',
+      phone: '04-2301-8892',
+      hours: '週二至週日 14:00 – 01:00（最後點餐 00:00）',
+      closedDay: '每週一公休',
+      rules:
+        '線上訂位保留 10 分鐘；每人低消一杯飲品。一樓交流區平日不限時（客滿限時 2.5 小時）；二樓靜謐區全程禁止交談與通話，請將手機轉為靜音。',
+      transport: '搭乘公車至「英才向上北路口」站下車，步行約 4 分鐘即可抵達巷口。',
+      parking: '機車可停放於模範街外圍停車格；汽車建議停放於「草悟道地下停車場」（步行約 6 分鐘）。',
+      email: 'hello@glimmerroom.tw',
+      instagram: '@glimmerroom.taichung',
+      googleMapsUrl:
+        'https://www.google.com/maps/search/?api=1&query=台中市西區模範街18巷12號',
+      googleMapsEmbedUrl:
+        'https://maps.google.com/maps?q=台中市西區模範街18巷12號&t=&z=16&ie=UTF8&iwloc=&output=embed',
+    };
+
+    // 2. 菜單資料（3 大分類、共 9 道品項，包含器皿擺盤特色與標籤）
+    const MENU_CATEGORIES = ['全部', '精品咖啡', '手作甜點', '暖胃鹹食與茶飲'];
+
+    const MENU_ITEMS = [
+      {
+        id: 'coffee-1',
+        category: '精品咖啡',
+        name: '耶加雪菲・日曬手沖',
+        price: 160,
+        tag: '招牌主打',
+        plating: '手工粗陶杯＋聞香小杯',
+        description:
+          '帶有柑橘與莓果清香，以手工粗陶杯搭配聞香小杯雙杯呈裝，冷熱皆具細膩果酸層次。',
+      },
+      {
+        id: 'coffee-2',
+        category: '精品咖啡',
+        name: '深夜黑糖肉桂拿鐵',
+        price: 150,
+        tag: '招牌主打',
+        plating: '溫潤窯變馬克杯',
+        description:
+          '中深焙濃縮融合小農鮮乳，表層炙燒沖繩黑糖與現磨肉桂粉，香氣溫潤不甜膩。',
+      },
+      {
+        id: 'coffee-3',
+        category: '精品咖啡',
+        name: '西西里檸檬氣泡咖啡',
+        price: 145,
+        tag: '清爽推薦',
+        plating: '復古刻花玻璃高杯',
+        description:
+          '新鮮榨取屏東九如檸檬汁搭配中焙濃縮與細緻氣泡，盛裝於復古刻花玻璃杯中。',
+      },
+      {
+        id: 'dessert-1',
+        category: '手作甜點',
+        name: '昭和硬派焦糖布丁',
+        price: 130,
+        tag: '招牌主打',
+        plating: '復古高腳銀盤呈裝',
+        description:
+          '選用紅仁蛋與馬達加斯加香草籽慢火蒸烤，口感紮實綿密，搭配微苦焦糖醬與高腳銀盤擺盤。',
+      },
+      {
+        id: 'dessert-2',
+        category: '手作甜點',
+        name: '宇治小山園抹茶巴斯克',
+        price: 165,
+        tag: '招牌主打',
+        plating: '霧面黑陶盤＋柚子皮絲',
+        description:
+          '半熟流心口感，濃郁抹茶微苦茶韻平衡乳酪奶香，佐以手打鮮奶油與清香柚子皮絲。',
+      },
+      {
+        id: 'dessert-3',
+        category: '手作甜點',
+        name: '伯爵茶香可麗露',
+        price: 95,
+        tag: '限量供應',
+        plating: '胡桃木小點心碟',
+        description:
+          '外殼焦脆帶有天然蜂蠟香氣，內裡濕潤 Q 彈，散發淡淡佛手柑茶韻，搭配胡桃木小碟。',
+      },
+      {
+        id: 'savory-1',
+        category: '暖胃鹹食與茶飲',
+        name: '野菇培根法式鹹派',
+        price: 175,
+        tag: '鹹食首選',
+        plating: '天然相思木餐盤',
+        description:
+          '手工酥脆塔皮填入炒香綜合野菇與煙燻培根，附巴薩米克油醋生菜沙拉木盤上桌。',
+      },
+      {
+        id: 'savory-2',
+        category: '暖胃鹹食與茶飲',
+        name: '炙燒明太子軟法拼盤',
+        price: 160,
+        tag: '夜間飽足',
+        plating: '日式灰釉長方陶盤',
+        description:
+          '外酥內軟的法國麵包抹上特製明太子醬炙燒，搭配半熟溏心蛋與季節鮮果。',
+      },
+      {
+        id: 'savory-3',
+        category: '暖胃鹹食與茶飲',
+        name: '鹿谷炭焙烏龍鮮奶茶',
+        price: 140,
+        tag: '低咖啡因感',
+        plating: '雙層隔熱玻璃杯',
+        description:
+          '台灣高山炭焙烏龍現萃茶湯加入濃醇鮮乳，茶香厚實回甘，適合深夜放鬆飲用。',
+      },
+    ];
+
+    // 3. 視覺圖庫資料（6 張涵蓋空間、飲品與甜點，具備完整 alt 替代文字與備援圖）
+    const GALLERY_ITEMS = [
+      {
+        id: 'gal-1',
+        title: '老宅靜巷外觀',
+        category: '空間環境',
+        src: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=900&q=80',
+        fallback: 'https://placehold.co/800x600/28221E/D4A373?text=Glimmer+Room+Exterior',
+        alt: '微光所深夜老宅咖啡廳外觀，保留木框窗花與暖黃壁燈照明',
+        caption: '藏身台中西區模範街巷弄的兩層樓老宅，夜幕降臨時點亮 2700K 暖黃壁燈。',
+      },
+      {
+        id: 'gal-2',
+        title: '一樓｜微光交流區',
+        category: '空間環境',
+        src: 'https://images.unsplash.com/photo-1521017432531-fbd92d768814?auto=format&fit=crop&w=900&q=80',
+        fallback: 'https://placehold.co/800x600/28221E/D4A373?text=1F+Social+Lounge',
+        alt: '微光所一樓微光交流區室內空間，磨石子地板搭配木質雙人桌與暖色吊燈',
+        caption: '保留老宅磨石子地坪與木質長桌，適合與好友輕聲分享日常與夜晚靈感。',
+      },
+      {
+        id: 'gal-3',
+        title: '二樓｜靜謐專注區',
+        category: '空間環境',
+        src: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=900&q=80',
+        fallback: 'https://placehold.co/800x600/28221E/D4A373?text=2F+Quiet+Study+Zone',
+        alt: '微光所二樓靜謐專注區，配備獨立閱讀桌燈與插座的靠窗單人座位',
+        caption: '禁止交談與通話的獨立閱讀座位，每席皆配有護眼桌燈與獨立電源插座。',
+      },
+      {
+        id: 'gal-4',
+        title: '手沖單品與手工粗陶',
+        category: '器皿與咖啡',
+        src: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80',
+        fallback: 'https://placehold.co/800x600/28221E/D4A373?text=Hand+Drip+Coffee',
+        alt: '耶加雪菲日曬手沖咖啡，使用手工粗陶杯與聞香杯盛裝於木托盤',
+        caption: '選用台灣陶藝家手作粗陶杯與聞香小杯，讓每一口溫度與香氣更有儀式感。',
+      },
+      {
+        id: 'gal-5',
+        title: '昭和布丁與銀器擺盤',
+        category: '手作甜點',
+        src: 'https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=900&q=80',
+        fallback: 'https://placehold.co/800x600/28221E/D4A373?text=Caramel+Pudding',
+        alt: '昭和硬派焦糖布丁與手作甜點，盛裝於復古高腳銀盤與溫潤陶盤',
+        caption: '微苦焦糖醬緩緩流淌在紮實綿密的布丁上，盛裝於經典復古高腳銀盤。',
+      },
+      {
+        id: 'gal-6',
+        title: '深夜暖胃輕食木盤',
+        category: '暖胃鹹食',
+        src: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=900&q=80',
+        fallback: 'https://placehold.co/800x600/28221E/D4A373?text=Savory+Plate',
+        alt: '野菇培根法式鹹派搭配油醋生菜沙拉，呈現於溫潤木質餐盤',
+        caption: '現烤酥脆塔皮與溫潤天然木盤，為深夜加班或趕作業的你補充溫暖能量。',
+      },
+    ];
+
+    /**
+     * ============================================================================
+     * 1. Navbar 網站導覽列元件
+     * ============================================================================
+     */
+    function Navbar() {
+      const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+      const [scrolled, setScrolled] = useState(false);
+
+      useEffect(() => {
+        const handleScroll = () => {
+          setScrolled(window.scrollY > 30);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+      }, []);
+
+      const navLinks = [
+        { label: '首頁 Home', href: '#home' },
+        { label: '關於 About', href: '#about' },
+        { label: '菜單 Menu', href: '#menu' },
+        { label: '環境 Gallery', href: '#gallery' },
+        { label: '訂位 Reservation', href: '#reservation' },
+        { label: '聯絡 Contact', href: '#contact' },
+      ];
+
+      const handleLinkClick = () => {
+        setMobileMenuOpen(false);
+      };
+
+      return (
+        <header
+          className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+            scrolled
+              ? 'bg-[#14110F]/95 backdrop-blur-md border-b border-[#362E29] shadow-lg'
+              : 'bg-[#14110F]/75 backdrop-blur-sm border-b border-transparent'
+          }`}
+        >
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
+            {/* 品牌 Logo */}
+            <a
+              href="#home"
+              className="flex items-center gap-3 group focus:outline-none"
+              onClick={handleLinkClick}
+            >
+              <span className="w-9 h-9 rounded-full bg-[#D4A373]/15 border border-[#D4A373]/50 flex items-center justify-center text-[#D4A373] group-hover:bg-[#D4A373] group-hover:text-[#14110F] transition-colors">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 18h6M10 22h4M12 2v1M4.22 4.22l.71.71M1 12h1M22 12h1M19.07 4.93l-.71.71M15.5 14a3.5 3.5 0 1 0-7 0c0 1.38.78 2.58 1.93 3.16h3.14A3.5 3.5 0 0 0 15.5 14z" />
+                </svg>
+              </span>
+              <div>
+                <span className="block text-lg font-serif tracking-widest text-[#F5EFEA] font-semibold">
+                  {STORE_INFO.name}
+                </span>
+                <span className="block text-[10px] tracking-[0.25em] text-[#D4A373]">
+                  {STORE_INFO.englishName}
+                </span>
+              </div>
+            </a>
+
+            {/* 桌面版導覽選單 */}
+            <nav className="hidden lg:flex items-center gap-6" aria-label="主導覽列">
+              {navLinks.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className="text-sm text-[#B8ACA2] hover:text-[#D4A373] transition-colors py-2"
+                >
+                  {item.label}
+                </a>
+              ))}
+              <a
+                href="#reservation"
+                className="ml-2 px-4 py-2 rounded-lg bg-[#D4A373] text-[#14110F] text-sm font-semibold hover:bg-[#E5B889] transition-colors shadow-sm"
+              >
+                立即訂位
+              </a>
+            </nav>
+
+            {/* 手機/平板版選單切換按鈕 */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2.5 rounded-lg text-[#F5EFEA] hover:bg-[#28221E] border border-[#362E29] focus:outline-none"
+              aria-label="開啟或關閉導覽選單"
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? (
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
+          </div>
+
+          {/* 手機版展開抽屜 */}
+          {mobileMenuOpen && (
+            <div className="lg:hidden bg-[#1E1916] border-b border-[#362E29] px-4 pt-2 pb-5 space-y-1">
+              {navLinks.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  onClick={handleLinkClick}
+                  className="block px-3 py-3 rounded-lg text-base text-[#F5EFEA] hover:bg-[#28221E] hover:text-[#D4A373] transition-colors"
+                >
+                  {item.label}
+                </a>
+              ))}
+              <div className="pt-2">
+                <a
+                  href="#reservation"
+                  onClick={handleLinkClick}
+                  className="block w-full text-center py-3 rounded-lg bg-[#D4A373] text-[#14110F] font-semibold"
+                >
+                  立即預約座位
+                </a>
+              </div>
+            </div>
+          )}
+        </header>
+      );
+    }
+
+    /**
+     * ============================================================================
+     * 2. HeroSection 首頁主視覺元件
+     * ============================================================================
+     */
+    function HeroSection() {
+      return (
+        <section
+          id="home"
+          className="relative min-h-[88vh] flex items-center pt-24 pb-16 px-4 sm:px-6 overflow-hidden"
+        >
+          <div className="absolute inset-0 z-0">
+            <img
+              src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1600&q=80"
+              onError={(e) => {
+                e.currentTarget.src =
+                  'https://placehold.co/1600x900/14110F/362E29?text=Glimmer+Room+Midnight+Cafe';
+              }}
+              alt="深夜老宅咖啡廳桌面暖光與手沖咖啡氛圍"
+              className="w-full h-full object-cover opacity-30"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#14110F]/85 via-[#14110F]/75 to-[#14110F]" />
+            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] sm:w-[540px] h-[320px] sm:h-[540px] rounded-full bg-[#D4A373]/10 blur-3xl pointer-events-none" />
+          </div>
+
+          <div className="relative z-10 max-w-4xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#28221E]/90 border border-[#D4A373]/30 text-[#D4A373] text-xs sm:text-sm tracking-wider mb-6">
+              <span>台中西區・模範街老宅</span>
+              <span className="text-[#362E29]">|</span>
+              <span>營業至凌晨 01:00</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-serif font-bold text-[#F5EFEA] leading-tight tracking-wide mb-6">
+              留一盞深夜微光，
+              <span className="block text-[#D4A373] mt-2">
+                盛裝純粹好喝與靜謐時光
+              </span>
+            </h1>
+
+            <p className="max-w-2xl mx-auto text-base sm:text-lg text-[#B8ACA2] leading-relaxed mb-10">
+              兩層樓老宅改建，一樓保留輕聲交談的暖光餐桌，二樓打造禁止交談的靜謐專注席。
+              沒有花俏噱頭，只有沖煮到位的咖啡、手作甜點與溫潤陶銀器皿擺盤。
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <a
+                href="#reservation"
+                className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#D4A373] text-[#14110F] font-semibold text-base hover:bg-[#E5B889] transition-all shadow-lg shadow-[#D4A373]/15"
+              >
+                預約一樓 / 二樓座位
+              </a>
+              <a
+                href="#menu"
+                className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#28221E]/80 text-[#F5EFEA] border border-[#362E29] hover:border-[#D4A373]/60 font-medium text-base transition-all"
+              >
+                瀏覽精選菜單
+              </a>
+            </div>
+
+            <div className="mt-14 pt-8 border-t border-[#362E29]/70 grid grid-cols-3 gap-4 max-w-2xl mx-auto text-center">
+              <div>
+                <p className="text-lg sm:text-xl font-serif text-[#D4A373] font-semibold">1F 交流區</p>
+                <p className="text-xs sm:text-sm text-[#B8ACA2] mt-1">暖光木桌・輕聲小聚</p>
+              </div>
+              <div className="border-x border-[#362E29]/70">
+                <p className="text-lg sm:text-xl font-serif text-[#D4A373] font-semibold">2F 寧靜區</p>
+                <p className="text-xs sm:text-sm text-[#B8ACA2] mt-1">禁止交談・獨立插座桌燈</p>
+              </div>
+              <div>
+                <p className="text-lg sm:text-xl font-serif text-[#D4A373] font-semibold">器皿美學</p>
+                <p className="text-xs sm:text-sm text-[#B8ACA2] mt-1">手工粗陶與復古銀盤</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    /**
+     * ============================================================================
+     * 3. AboutSection 品牌特色與空間分區介紹元件
+     * ============================================================================
+     */
+    function AboutSection() {
+      return (
+        <section id="about" className="py-20 px-4 sm:px-6 bg-[#181412] border-y border-[#362E29]/60">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center max-w-2xl mx-auto mb-14">
+              <span className="text-xs tracking-[0.25em] text-[#D4A373] uppercase">
+                ABOUT &amp; SPACE CONCEPT
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-serif font-bold text-[#F5EFEA] mt-2">
+                一座老宅，兩種剛剛好的夜晚頻率
+              </h2>
+              <p className="text-sm sm:text-base text-[#B8ACA2] mt-4 leading-relaxed">
+                我們相信深夜咖啡廳不需要過度複雜的飲品噱頭，只要把每一杯手沖、每一顆焦糖布丁做好，
+                用溫潤器皿端上桌，並為不同需求的人劃分出互不干擾的空間。
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-12">
+              <div className="p-6 sm:p-8 rounded-2xl bg-[#1E1916] border border-[#362E29] hover:border-[#D4A373]/40 transition-colors">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#D4A373]/15 text-[#D4A373] border border-[#D4A373]/30">
+                    1F｜微光交流區（16 席）
+                  </span>
+                  <span className="text-xs text-[#B8ACA2]">可輕聲交談</span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-serif font-semibold text-[#F5EFEA] mb-3">
+                  暖黃吊燈與磨石子地坪的對話角落
+                </h3>
+                <p className="text-sm sm:text-base text-[#B8ACA2] leading-relaxed mb-5">
+                  保留老宅原有的天井採光與台灣早期磨石子地板，配置溫潤胡桃木雙人桌與四人長桌。
+                  適合下班後與好友小聚、輕聲分享近況，在咖啡香裡卸下一整天的疲憊。
+                </p>
+                <ul className="space-y-2 text-xs sm:text-sm text-[#F5EFEA]/90 border-t border-[#362E29] pt-4">
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#D4A373]">•</span> 座位配置：2 人方桌 × 4、4 人木長桌 × 2
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#D4A373]">•</span> 用餐規範：平日不限時（客滿時限時 2.5 小時）
+                  </li>
+                </ul>
+              </div>
+
+              <div className="p-6 sm:p-8 rounded-2xl bg-[#1E1916] border border-[#362E29] hover:border-[#D4A373]/40 transition-colors">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-900/40 text-emerald-300 border border-emerald-700/40">
+                    2F｜靜謐專注區（14 席）
+                  </span>
+                  <span className="text-xs text-[#B8ACA2]">全程禁止交談</span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-serif font-semibold text-[#F5EFEA] mb-3">
+                  只留翻書聲與鍵盤輕響的獨處書房
+                </h3>
+                <p className="text-sm sm:text-base text-[#B8ACA2] leading-relaxed mb-5">
+                  沿著木樓梯走上二樓，我們以木質隔板打造半獨立單人座與老木窗吧台。
+                  全區禁止交談與接聽電話，專為夜間趕圖的設計系學生、自由工作者與閱讀者設計。
+                </p>
+                <ul className="space-y-2 text-xs sm:text-sm text-[#F5EFEA]/90 border-t border-[#362E29] pt-4">
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#D4A373]">•</span> 座位配置：隔板單人書桌 × 8、窗景吧台 × 6
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-[#D4A373]">•</span> 貼心設備：每席皆附獨立插座、2700K 護眼閱讀燈與置物籃
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="p-6 sm:p-8 rounded-2xl bg-[#28221E]/70 border border-[#362E29] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div>
+                <h4 className="text-lg font-serif font-semibold text-[#D4A373] mb-1">
+                  「好喝好吃，從盛裝的器皿開始」
+                </h4>
+                <p className="text-sm text-[#B8ACA2] leading-relaxed">
+                  我們與台中在地陶藝工作室合作，依飲品溫度與甜點質地搭配粗陶杯、高腳銀盤與天然相思木盤，
+                  讓視覺擺盤與入口風味同樣令人難忘。
+                </p>
+              </div>
+              <a
+                href="#gallery"
+                className="shrink-0 px-5 py-2.5 rounded-xl bg-[#1E1916] text-[#F5EFEA] border border-[#D4A373]/40 hover:bg-[#D4A373] hover:text-[#14110F] text-sm font-medium transition-colors"
+              >
+                查看器皿與空間寫真 →
+              </a>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    /**
+     * ============================================================================
+     * 4. MenuSection 模組化菜單元件
+     * ============================================================================
+     */
+    function MenuSection() {
+      const [activeCategory, setActiveCategory] = useState('全部');
+
+      const filteredItems =
+        activeCategory === '全部'
+          ? MENU_ITEMS
+          : MENU_ITEMS.filter((item) => item.category === activeCategory);
+
+      return (
+        <section id="menu" className="py-20 px-4 sm:px-6 bg-[#14110F]">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center max-w-2xl mx-auto mb-10">
+              <span className="text-xs tracking-[0.25em] text-[#D4A373] uppercase">
+                CURATED MENU
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-serif font-bold text-[#F5EFEA] mt-2">
+                深夜手作菜單與器皿呈裝
+              </h2>
+              <p className="text-sm sm:text-base text-[#B8ACA2] mt-3">
+                每人低消一杯飲品｜全品項皆為現點現沖、每日限量手作烘焙
+              </p>
+            </div>
+
+            <div
+              role="tablist"
+              aria-label="菜單分類篩選"
+              className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 mb-10"
+            >
+              {MENU_CATEGORIES.map((category) => {
+                const isActive = activeCategory === category;
+                return (
+                  <button
+                    key={category}
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => setActiveCategory(category)}
+                    className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-[#D4A373] text-[#14110F] shadow-md shadow-[#D4A373]/20'
+                        : 'bg-[#1E1916] text-[#B8ACA2] border border-[#362E29] hover:border-[#D4A373]/50 hover:text-[#F5EFEA]'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredItems.map((item) => (
+                <article
+                  key={item.id}
+                  className="p-6 rounded-2xl bg-[#1E1916] border border-[#362E29] hover:border-[#D4A373]/50 transition-all flex flex-col justify-between group"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <span className="text-xs text-[#B8ACA2]">{item.category}</span>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-md text-xs font-medium ${
+                          item.tag === '招牌主打'
+                            ? 'bg-[#D4A373]/20 text-[#D4A373] border border-[#D4A373]/30'
+                            : 'bg-[#28221E] text-[#B8ACA2] border border-[#362E29]'
+                        }`}
+                      >
+                        {item.tag}
+                      </span>
+                    </div>
+
+                    <div className="flex items-baseline justify-between gap-3 mb-3">
+                      <h3 className="text-lg font-serif font-semibold text-[#F5EFEA] group-hover:text-[#D4A373] transition-colors">
+                        {item.name}
+                      </h3>
+                      <span className="text-base font-semibold text-[#D4A373] shrink-0">
+                        NT$ {item.price}
+                      </span>
+                    </div>
+
+                    <p className="text-sm text-[#B8ACA2] leading-relaxed mb-4">
+                      {item.description}
+                    </p>
+                  </div>
+
+                  <div className="pt-3 border-t border-[#362E29]/80 flex items-center gap-2 text-xs text-[#D4A373]/90">
+                    <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="9" />
+                      <circle cx="12" cy="12" r="4" />
+                    </svg>
+                    <span>器皿呈裝：{item.plating}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    /**
+     * ============================================================================
+     * 5. Gallery 視覺圖庫展演元件（支援 Lightbox 放大檢視）
+     * ============================================================================
+     */
+    function Gallery() {
+      const [selectedIndex, setSelectedIndex] = useState(null);
+
+      useEffect(() => {
+        if (selectedIndex === null) return;
+        const handleKeyDown = (e) => {
+          if (e.key === 'Escape') setSelectedIndex(null);
+          if (e.key === 'ArrowRight') {
+            setSelectedIndex((prev) => (prev + 1) % GALLERY_ITEMS.length);
+          }
+          if (e.key === 'ArrowLeft') {
+            setSelectedIndex((prev) => (prev - 1 + GALLERY_ITEMS.length) % GALLERY_ITEMS.length);
+          }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+      }, [selectedIndex]);
+
+      const currentItem = selectedIndex !== null ? GALLERY_ITEMS[selectedIndex] : null;
+
+      return (
+        <section id="gallery" className="py-20 px-4 sm:px-6 bg-[#181412] border-y border-[#362E29]/60">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              <span className="text-xs tracking-[0.25em] text-[#D4A373] uppercase">
+                VISUAL GALLERY
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-serif font-bold text-[#F5EFEA] mt-2">
+                空間光影與器皿擺盤寫真
+              </h2>
+              <p className="text-sm sm:text-base text-[#B8ACA2] mt-3">
+                點擊任一張照片可放大檢視細節與空間說明
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {GALLERY_ITEMS.map((photo, index) => (
+                <button
+                  key={photo.id}
+                  type="button"
+                  onClick={() => setSelectedIndex(index)}
+                  className="group text-left rounded-2xl overflow-hidden bg-[#1E1916] border border-[#362E29] hover:border-[#D4A373]/60 transition-all focus:outline-none focus:ring-2 focus:ring-[#D4A373]"
+                >
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#28221E]">
+                    <img
+                      src={photo.src}
+                      alt={photo.alt}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.src = photo.fallback;
+                      }}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#14110F]/80 via-transparent to-transparent opacity-80 group-hover:opacity-95 transition-opacity" />
+                    <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-[#14110F]/80 backdrop-blur-sm text-xs text-[#D4A373] border border-[#362E29]">
+                      {photo.category}
+                    </span>
+                    <span className="absolute bottom-3 right-3 px-2.5 py-1 rounded-md bg-[#14110F]/80 text-xs text-[#F5EFEA] opacity-0 group-hover:opacity-100 transition-opacity">
+                      點擊放大
+                    </span>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="text-base font-serif font-semibold text-[#F5EFEA] group-hover:text-[#D4A373] transition-colors">
+                      {photo.title}
+                    </h3>
+                    <p className="text-xs text-[#B8ACA2] mt-1 line-clamp-2 leading-relaxed">
+                      {photo.caption}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {currentItem && (
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={currentItem.title}
+              className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+              onClick={() => setSelectedIndex(null)}
+            >
+              <div
+                className="relative max-w-4xl w-full bg-[#1E1916] border border-[#362E29] rounded-2xl overflow-hidden shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={() => setSelectedIndex(null)}
+                  className="absolute top-3 right-3 z-10 w-10 h-10 rounded-full bg-[#14110F]/85 text-[#F5EFEA] hover:text-[#D4A373] border border-[#362E29] flex items-center justify-center"
+                  aria-label="關閉放大檢視"
+                >
+                  ✕
+                </button>
+
+                <div className="relative aspect-[4/3] max-h-[65vh] w-full bg-[#14110F] flex items-center justify-center">
+                  <img
+                    src={currentItem.src}
+                    alt={currentItem.alt}
+                    onError={(e) => {
+                      e.currentTarget.src = currentItem.fallback;
+                    }}
+                    className="w-full h-full object-contain"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedIndex((selectedIndex - 1 + GALLERY_ITEMS.length) % GALLERY_ITEMS.length)
+                    }
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#14110F]/80 text-[#F5EFEA] hover:text-[#D4A373] border border-[#362E29] flex items-center justify-center"
+                    aria-label="上一張圖片"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedIndex((selectedIndex + 1) % GALLERY_ITEMS.length)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#14110F]/80 text-[#F5EFEA] hover:text-[#D4A373] border border-[#362E29] flex items-center justify-center"
+                    aria-label="下一張圖片"
+                  >
+                    ›
+                  </button>
+                </div>
+
+                <div className="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-[#362E29]">
+                  <div>
+                    <span className="text-xs text-[#D4A373]">{currentItem.category}</span>
+                    <h4 className="text-lg font-serif font-semibold text-[#F5EFEA] mt-0.5">
+                      {currentItem.title}
+                    </h4>
+                    <p className="text-sm text-[#B8ACA2] mt-1">{currentItem.caption}</p>
+                  </div>
+                  <span className="text-xs text-[#B8ACA2] shrink-0">
+                    {selectedIndex + 1} / {GALLERY_ITEMS.length}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+      );
+    }
+
+    /**
+     * ============================================================================
+     * 6. ReservationForm 互動訂位表單元件
+     * ============================================================================
+     */
+    function ReservationForm() {
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      const [formData, setFormData] = useState({
+        name: '',
+        contact: '',
+        date: todayStr,
+        time: '19:30',
+        guests: '2',
+        zone: '一樓｜微光交流區（可輕聲交談）',
+        childSeat: false,
+        notes: '',
+      });
+
+      const [errors, setErrors] = useState({});
+      const [submittedSummary, setSubmittedSummary] = useState(null);
+
+      const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setFormData((prev) => ({
+          ...prev,
+          [name]: type === 'checkbox' ? checked : value,
+        }));
+        if (errors[name]) {
+          setErrors((prev) => ({ ...prev, [name]: '' }));
+        }
+      };
+
+      const validate = () => {
+        const newErrors = {};
+        if (!formData.name.trim()) newErrors.name = '請填寫訂位人姓名';
+        if (!formData.contact.trim()) newErrors.contact = '請填寫手機號碼或 Email 聯絡方式';
+        if (!formData.date) {
+          newErrors.date = '請選擇用餐日期';
+        } else if (formData.date < todayStr) {
+          newErrors.date = '訂位日期不可選擇過去的時間';
+        }
+        if (!formData.time) newErrors.time = '請選擇預計抵達時間';
+        if (!formData.guests || Number(formData.guests) < 1) {
+          newErrors.guests = '請選擇正確的用餐人數';
+        }
+        return newErrors;
+      };
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        const validationErrors = validate();
+        if (Object.keys(validationErrors).length > 0) {
+          setErrors(validationErrors);
+          return;
+        }
+        setSubmittedSummary({ ...formData });
+      };
+
+      return (
+        <section id="reservation" className="py-20 px-4 sm:px-6 bg-[#14110F]">
+          <div className="max-w-3xl mx-auto">
+            <div className="text-center mb-10">
+              <span className="text-xs tracking-[0.25em] text-[#D4A373] uppercase">
+                ONLINE RESERVATION
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-serif font-bold text-[#F5EFEA] mt-2">
+                線上預約座位
+              </h2>
+              <p className="text-sm sm:text-base text-[#B8ACA2] mt-3">
+                請依您的需求選擇「一樓交流區」或「二樓靜謐專注區」，訂位為您保留 10 分鐘
+              </p>
+            </div>
+
+            <div className="mb-6 p-4 rounded-xl bg-amber-950/40 border border-[#D4A373]/40 text-xs sm:text-sm text-[#E5B889] flex items-start gap-3">
+              <span className="font-bold shrink-0 mt-0.5">※ 展示聲明：</span>
+              <span>
+                此為前端網頁設計課程之「課堂展示表單」，僅供互動功能與資料驗證呈現，並非真實商業訂位系統。
+              </span>
+            </div>
+
+            {submittedSummary ? (
+              <div className="p-6 sm:p-8 rounded-2xl bg-[#1E1916] border border-[#D4A373]/60 shadow-xl">
+                <div className="flex items-center gap-3 text-[#D4A373] mb-4">
+                  <span className="w-8 h-8 rounded-full bg-[#D4A373]/20 flex items-center justify-center font-bold">
+                    ✓
+                  </span>
+                  <h3 className="text-xl font-serif font-bold text-[#F5EFEA]">
+                    已收到您的訂位資訊（展示模擬成功）
+                  </h3>
+                </div>
+                <p className="text-sm text-[#B8ACA2] mb-6">
+                  感謝您預約微光所，以下為您本次填寫的訂位摘要，請於預約時間準時抵達：
+                </p>
+
+                <div className="p-5 rounded-xl bg-[#14110F] border border-[#362E29] space-y-3 text-sm">
+                  <div className="flex justify-between border-b border-[#362E29]/60 pb-2">
+                    <span className="text-[#B8ACA2]">訂位大名</span>
+                    <span className="text-[#F5EFEA] font-medium">{submittedSummary.name}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-[#362E29]/60 pb-2">
+                    <span className="text-[#B8ACA2]">聯絡方式</span>
+                    <span className="text-[#F5EFEA] font-medium">{submittedSummary.contact}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-[#362E29]/60 pb-2">
+                    <span className="text-[#B8ACA2]">預約日期與時間</span>
+                    <span className="text-[#D4A373] font-semibold">
+                      {submittedSummary.date} ｜ {submittedSummary.time}
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-b border-[#362E29]/60 pb-2">
+                    <span className="text-[#B8ACA2]">用餐人數</span>
+                    <span className="text-[#F5EFEA]">{submittedSummary.guests} 位</span>
+                  </div>
+                  <div className="flex justify-between border-b border-[#362E29]/60 pb-2">
+                    <span className="text-[#B8ACA2]">座位區域偏好</span>
+                    <span className="text-[#F5EFEA]">{submittedSummary.zone}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-[#362E29]/60 pb-2">
+                    <span className="text-[#B8ACA2]">兒童座椅需求</span>
+                    <span className="text-[#F5EFEA]">
+                      {submittedSummary.childSeat ? '需要兒童座椅（限一樓）' : '不需要'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#B8ACA2]">特殊備註</span>
+                    <span className="text-[#F5EFEA] text-right max-w-[60%]">
+                      {submittedSummary.notes.trim() || '無'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setSubmittedSummary(null)}
+                    className="px-6 py-3 rounded-xl bg-[#D4A373] text-[#14110F] font-semibold text-sm hover:bg-[#E5B889] transition-colors"
+                  >
+                    修改或重新填寫訂位
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form
+                onSubmit={handleSubmit}
+                noValidate
+                className="p-6 sm:p-8 rounded-2xl bg-[#1E1916] border border-[#362E29] space-y-5"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label htmlFor="res-name" className="block text-sm font-medium text-[#F5EFEA] mb-1.5">
+                      訂位人姓名 <span className="text-[#D4A373]">*</span>
+                    </label>
+                    <input
+                      id="res-name"
+                      name="name"
+                      type="text"
+                      placeholder="例如：林小姐 / 王先生"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-xl bg-[#14110F] border border-[#362E29] text-[#F5EFEA] placeholder-[#B8ACA2]/50 focus:outline-none focus:border-[#D4A373]"
+                    />
+                    {errors.name && <p className="text-xs text-rose-400 mt-1">{errors.name}</p>}
+                  </div>
+
+                  <div>
+                    <label htmlFor="res-contact" className="block text-sm font-medium text-[#F5EFEA] mb-1.5">
+                      聯絡電話或 Email <span className="text-[#D4A373]">*</span>
+                    </label>
+                    <input
+                      id="res-contact"
+                      name="contact"
+                      type="text"
+                      placeholder="0912-345-678"
+                      value={formData.contact}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-xl bg-[#14110F] border border-[#362E29] text-[#F5EFEA] placeholder-[#B8ACA2]/50 focus:outline-none focus:border-[#D4A373]"
+                    />
+                    {errors.contact && <p className="text-xs text-rose-400 mt-1">{errors.contact}</p>}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  <div>
+                    <label htmlFor="res-date" className="block text-sm font-medium text-[#F5EFEA] mb-1.5">
+                      用餐日期 <span className="text-[#D4A373]">*</span>
+                    </label>
+                    <input
+                      id="res-date"
+                      name="date"
+                      type="date"
+                      min={todayStr}
+                      value={formData.date}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-xl bg-[#14110F] border border-[#362E29] text-[#F5EFEA] focus:outline-none focus:border-[#D4A373]"
+                    />
+                    {errors.date && <p className="text-xs text-rose-400 mt-1">{errors.date}</p>}
+                  </div>
+
+                  <div>
+                    <label htmlFor="res-time" className="block text-sm font-medium text-[#F5EFEA] mb-1.5">
+                      預約時段 <span className="text-[#D4A373]">*</span>
+                    </label>
+                    <select
+                      id="res-time"
+                      name="time"
+                      value={formData.time}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-xl bg-[#14110F] border border-[#362E29] text-[#F5EFEA] focus:outline-none focus:border-[#D4A373]"
+                    >
+                      <option value="14:30">14:30（午後暖陽）</option>
+                      <option value="16:30">16:30（傍晚茶點）</option>
+                      <option value="19:30">19:30（夜間微光）</option>
+                      <option value="21:00">21:00（深夜專注）</option>
+                      <option value="22:30">22:30（夜貓靜謐）</option>
+                    </select>
+                    {errors.time && <p className="text-xs text-rose-400 mt-1">{errors.time}</p>}
+                  </div>
+
+                  <div>
+                    <label htmlFor="res-guests" className="block text-sm font-medium text-[#F5EFEA] mb-1.5">
+                      用餐人數 <span className="text-[#D4A373]">*</span>
+                    </label>
+                    <select
+                      id="res-guests"
+                      name="guests"
+                      value={formData.guests}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-xl bg-[#14110F] border border-[#362E29] text-[#F5EFEA] focus:outline-none focus:border-[#D4A373]"
+                    >
+                      <option value="1">1 位（獨處／工作）</option>
+                      <option value="2">2 位</option>
+                      <option value="3">3 位</option>
+                      <option value="4">4 位（限一樓交流區）</option>
+                    </select>
+                    {errors.guests && <p className="text-xs text-rose-400 mt-1">{errors.guests}</p>}
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="res-zone" className="block text-sm font-medium text-[#F5EFEA] mb-1.5">
+                    座位區域偏好（選填）
+                  </label>
+                  <select
+                    id="res-zone"
+                    name="zone"
+                    value={formData.zone}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl bg-[#14110F] border border-[#362E29] text-[#F5EFEA] focus:outline-none focus:border-[#D4A373]"
+                  >
+                    <option value="一樓｜微光交流區（可輕聲交談）">
+                      一樓｜微光交流區（適合朋友小聚、可輕聲交談）
+                    </option>
+                    <option value="二樓｜靜謐專注區（禁止交談、附插座桌燈）">
+                      二樓｜靜謐專注區（禁止交談與通話、附獨立插座與閱讀燈）
+                    </option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-3 pt-1">
+                  <input
+                    id="res-childSeat"
+                    name="childSeat"
+                    type="checkbox"
+                    checked={formData.childSeat}
+                    onChange={handleChange}
+                    className="w-4 h-4 rounded accent-[#D4A373]"
+                  />
+                  <label htmlFor="res-childSeat" className="text-sm text-[#B8ACA2]">
+                    需要兒童座椅（僅提供於一樓交流區）
+                  </label>
+                </div>
+
+                <div>
+                  <label htmlFor="res-notes" className="block text-sm font-medium text-[#F5EFEA] mb-1.5">
+                    特殊需求或備註（選填）
+                  </label>
+                  <textarea
+                    id="res-notes"
+                    name="notes"
+                    rows="3"
+                    placeholder="例如：希望靠近插座、餐點過敏原提醒等..."
+                    value={formData.notes}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl bg-[#14110F] border border-[#362E29] text-[#F5EFEA] placeholder-[#B8ACA2]/50 focus:outline-none focus:border-[#D4A373]"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3.5 rounded-xl bg-[#D4A373] text-[#14110F] font-semibold text-base hover:bg-[#E5B889] transition-colors shadow-lg shadow-[#D4A373]/15"
+                >
+                  確認送出訂位申請
+                </button>
+              </form>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    /**
+     * ============================================================================
+     * 7. LocationSection 地圖與營業資訊元件
+     * ============================================================================
+     */
+    function LocationSection() {
+      return (
+        <section id="contact" className="py-20 px-4 sm:px-6 bg-[#181412] border-t border-[#362E29]/60">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              <span className="text-xs tracking-[0.25em] text-[#D4A373] uppercase">
+                LOCATION &amp; HOURS
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-serif font-bold text-[#F5EFEA] mt-2">
+                營業資訊與巷弄指引
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+              <div className="lg:col-span-5 p-6 sm:p-8 rounded-2xl bg-[#1E1916] border border-[#362E29] flex flex-col justify-between space-y-6">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-xl font-serif font-bold text-[#F5EFEA]">
+                      {STORE_INFO.name} {STORE_INFO.englishName}
+                    </h3>
+                    <p className="text-xs text-[#D4A373] mt-1">{STORE_INFO.tagline}</p>
+                  </div>
+
+                  <div className="space-y-3 text-sm border-t border-[#362E29] pt-4">
+                    <div>
+                      <span className="block text-xs text-[#D4A373] mb-0.5">店鋪地址</span>
+                      <p className="text-[#F5EFEA]">{STORE_INFO.address}</p>
+                    </div>
+                    <div>
+                      <span className="block text-xs text-[#D4A373] mb-0.5">營業時間與公休</span>
+                      <p className="text-[#F5EFEA]">{STORE_INFO.hours}</p>
+                      <p className="text-[#B8ACA2] text-xs mt-0.5">{STORE_INFO.closedDay}</p>
+                    </div>
+                    <div>
+                      <span className="block text-xs text-[#D4A373] mb-0.5">聯絡電話與信箱</span>
+                      <p className="text-[#F5EFEA]">
+                        {STORE_INFO.phone} ｜ {STORE_INFO.email}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="block text-xs text-[#D4A373] mb-0.5">大眾運輸與停車資訊</span>
+                      <p className="text-[#B8ACA2] text-xs leading-relaxed">{STORE_INFO.transport}</p>
+                      <p className="text-[#B8ACA2] text-xs leading-relaxed mt-1">{STORE_INFO.parking}</p>
+                    </div>
+                    <div>
+                      <span className="block text-xs text-[#D4A373] mb-0.5">低消與座位規範</span>
+                      <p className="text-[#B8ACA2] text-xs leading-relaxed">{STORE_INFO.rules}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <a
+                  href={STORE_INFO.googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 px-4 rounded-xl bg-[#D4A373] text-[#14110F] font-semibold text-sm text-center hover:bg-[#E5B889] transition-colors flex items-center justify-center gap-2"
+                >
+                  <span>在 Google Maps 中開啟導航</span>
+                  <span aria-hidden="true">↗</span>
+                </a>
+              </div>
+
+              <div className="lg:col-span-7 rounded-2xl overflow-hidden bg-[#1E1916] border border-[#362E29] flex flex-col">
+                <div className="w-full h-[320px] sm:h-[400px] lg:h-full min-h-[320px]">
+                  <iframe
+                    title="微光所 Glimmer Room Google 地圖位置"
+                    src={STORE_INFO.googleMapsEmbedUrl}
+                    className="w-full h-full border-0"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    /**
+     * ============================================================================
+     * 8. Footer 頁尾元件
+     * ============================================================================
+     */
+    function Footer() {
+      return (
+        <footer className="py-10 px-4 sm:px-6 bg-[#14110F] border-t border-[#362E29] text-center">
+          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#B8ACA2]">
+            <div>
+              <span className="font-serif text-sm text-[#F5EFEA] font-semibold">
+                {STORE_INFO.name} {STORE_INFO.englishName}
+              </span>
+              <span className="mx-2 text-[#362E29]">|</span>
+              <span>{STORE_INFO.address}</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span>Instagram: {STORE_INFO.instagram}</span>
+              <span className="text-[#362E29]">|</span>
+              <span>© {new Date().getFullYear()} Glimmer Room. 課堂網頁設計作品展示</span>
+            </div>
+          </div>
+        </footer>
+      );
+    }
+
+    /**
+     * ============================================================================
+     * 主應用程式入口 (App Component)
+     * ============================================================================
+     */
+    function App() {
+      return (
+        <div className="min-h-screen">
+          <Navbar />
+          <main>
+            <HeroSection />
+            <AboutSection />
+            <MenuSection />
+            <Gallery />
+            <ReservationForm />
+            <LocationSection />
+          </main>
+          <Footer />
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
